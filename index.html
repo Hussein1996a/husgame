@@ -1,73 +1,752 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hussein Game</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0a1a">
+<meta name="format-detection" content="telephone=no">
+<title>Hussein Fight</title>
 <style>
-    body {
-        margin: 0;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        font-family: Arial, sans-serif;
-        color: white;
-        text-align: center;
-    }
+:root{
+  --bg1:#0d0a1a; --bg2:#1a1233; --gold:#e8b25c; --ember:#d94f3d;
+  --ice:#5cc9e8; --panel:rgba(20,14,38,.85); --line:rgba(232,178,92,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:none;}
+html,body{height:100%;margin:0;overflow:hidden;background:#000;overscroll-behavior:none;
+  font-family:'Segoe UI',Tahoma,Arial,sans-serif;}
+#app{position:fixed;inset:0;max-width:480px;margin:0 auto;
+  background:radial-gradient(120% 90% at 50% 0%,var(--bg2),var(--bg1) 70%);
+  overflow:hidden;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);}
+#rotateGate{position:fixed;inset:0;z-index:999;display:none;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;background:#0a0614;color:#f2ead9;text-align:center;padding:24px;}
+#rotateGate .ic{font-size:44px;animation:rot 1.6s ease-in-out infinite;}
+@keyframes rot{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
+@media (orientation:landscape) and (max-height:520px){ #rotateGate{display:flex;} #app{visibility:hidden;} }
+.screen{position:absolute;inset:0;display:none;flex-direction:column;color:#f2ead9;}
+.screen.on{display:flex;}
 
-    .container {
-        padding: 40px;
-    }
+/* ---------- MENU ---------- */
+#menu{align-items:center;justify-content:center;text-align:center;gap:18px;padding:24px;}
+.logo{font-size:15px;letter-spacing:.3em;color:var(--ice);opacity:.8;}
+.title{font-size:clamp(32px,10vw,44px);font-weight:800;line-height:1.05;
+  background:linear-gradient(180deg,var(--gold),var(--ember));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 6px 30px rgba(217,79,61,.35);}
+.title small{display:block;font-size:20px;color:var(--ice);-webkit-text-fill-color:var(--ice);margin-top:4px;}
+.menu-btn{width:220px;padding:14px 0;border-radius:14px;border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(232,178,92,.18),rgba(232,178,92,.04));
+  color:#f2ead9;font-size:17px;font-weight:700;letter-spacing:.02em;}
+.menu-btn:active{transform:scale(.96);}
+.menu-btn.primary{background:linear-gradient(180deg,var(--ember),#a8332a);border-color:transparent;
+  box-shadow:0 8px 24px rgba(217,79,61,.4);}
+.menu-sub{font-size:12px;color:#b9aed0;max-width:260px;line-height:1.6;}
+.spinner{width:40px;height:40px;border-radius:50%;border:3px solid rgba(232,178,92,.2);
+  border-top-color:var(--gold);animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lobby-box{padding:6px 20px 10px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;}
+.lobby-box p{font-size:12px;color:#c9bfe0;margin:6px 0 0;}
+.lobby-box textarea{width:100%;min-height:64px;background:rgba(0,0,0,.35);border:1px solid var(--line);
+  border-radius:10px;color:#f2ead9;padding:8px;font-size:10px;resize:none;direction:ltr;font-family:monospace;}
+.lobby-box .menu-btn{width:100%;padding:9px 0;font-size:14px;}
 
-    h1 {
-        font-size: 48px;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
-    }
+/* ---------- SELECT ---------- */
+#select{padding:16px;gap:12px;}
+.hdr{display:flex;align-items:center;justify-content:space-between;}
+.hdr h2{margin:0;font-size:18px;color:var(--gold);}
+.back{background:none;border:1px solid var(--line);color:#f2ead9;border-radius:10px;padding:6px 14px;font-size:14px;}
+.roster{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-y:auto;padding-bottom:8px;}
+.card{border-radius:16px;padding:10px 6px 8px;text-align:center;border:2px solid transparent;
+  background:var(--panel);}
+.card.sel{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,178,92,.2) inset;}
+.avatar{width:100%;aspect-ratio:1/1;border-radius:50%;margin:0 auto 6px;position:relative;
+  box-shadow:inset 0 -10px 18px rgba(0,0,0,.45), inset 0 8px 14px rgba(255,255,255,.25), 0 0 14px 1px var(--glow,transparent);}
+.card b{font-size:12px;display:block;}
+.card span{font-size:9px;color:#b9aed0;}
+.selected-bar{display:flex;align-items:center;justify-content:space-between;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;}
+.selected-bar b{color:var(--gold);}
+.go-btn{background:linear-gradient(180deg,var(--ember),#a8332a);color:#fff;border:none;
+  border-radius:12px;padding:10px 22px;font-weight:800;font-size:15px;}
 
-    p {
-        color: #94a3b8;
-        margin-bottom: 30px;
-        font-size: 18px;
-    }
+/* ---------- FIGHT ---------- */
+#fight{background:linear-gradient(180deg,#241a3d 0%,#150f28 55%,#0a0614 100%);}
+#fight:before{content:"";position:absolute;top:0;left:0;right:0;height:130px;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(120px 60px at 15% 0%,rgba(232,178,92,.14),transparent 70%),
+    radial-gradient(120px 60px at 85% 0%,rgba(92,201,232,.12),transparent 70%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 2px,transparent 2px 10px);}
+.hud{display:flex;align-items:center;padding:8px 10px 4px;gap:8px;}
+.hud .side{flex:1;}
+.name{font-size:11px;font-weight:700;margin-bottom:3px;}
+.side.p2{text-align:left;}
+.hearts{display:flex;gap:2px;}
+.side.p2 .hearts{flex-direction:row-reverse;}
+.heart{width:14px;height:14px;position:relative;}
+.heart svg{width:100%;height:100%;}
+.clock{min-width:52px;text-align:center;font-size:20px;font-weight:800;color:var(--gold);
+  background:rgba(0,0,0,.35);border-radius:10px;padding:2px 6px;border:1px solid var(--line);}
+.roundpips{display:flex;justify-content:center;gap:6px;padding:2px 0 6px;}
+.pip{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);}
+.pip.won{background:var(--gold);}
 
-    .btn {
-        padding: 15px 40px;
-        font-size: 18px;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        background: linear-gradient(90deg, #22c55e, #16a34a);
-        color: white;
-        font-weight: bold;
-        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
-        transition: 0.3s;
-        text-decoration: none;
-        display: inline-block;
-    }
+.arena{flex:1;position:relative;overflow:hidden;
+  background:radial-gradient(60% 45% at 50% 60%,rgba(232,178,92,.10),transparent 70%);}
+.arena:before{content:"";position:absolute;left:0;right:0;bottom:14%;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(232,178,92,.65),transparent);
+  box-shadow:0 0 14px 2px rgba(232,178,92,.35);}
+.arena:after{content:"";position:absolute;left:0;right:0;bottom:0;height:26%;
+  background:linear-gradient(180deg,rgba(10,6,20,0),rgba(10,6,20,.94));}
+.fighter{position:absolute;bottom:14%;width:60px;height:122px;transform-origin:50% 100%;
+  transition:left .11s linear;}
+.fighter .shadow{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+  width:46px;height:9px;border-radius:50%;background:rgba(0,0,0,.55);filter:blur(2.5px);}
+.fighter .body{position:relative;width:100%;height:100%;transform-origin:50% 90%;
+  animation:idleBreathe 1.8s ease-in-out infinite;}
+.fighter .neck{position:absolute;top:20px;left:26px;width:8px;height:6px;border-radius:2px;filter:brightness(.9);}
+.fighter .head{width:24px;height:26px;border-radius:48% 48% 42% 42%;position:absolute;top:0;left:18px;
+  box-shadow:inset -4px -5px 7px rgba(0,0,0,.4), inset 3px 3px 5px rgba(255,255,255,.28);}
+.fighter .hair{position:absolute;top:-2px;left:16px;width:28px;height:14px;border-radius:14px 14px 4px 4px;filter:brightness(.55);}
+.fighter .torso{position:absolute;top:24px;left:11px;width:38px;height:44px;border-radius:13px 13px 16px 16px;
+  box-shadow:inset -5px -6px 9px rgba(0,0,0,.42), inset 4px 4px 7px rgba(255,255,255,.22);}
+.fighter .abs{position:absolute;top:40px;left:19px;width:22px;height:22px;
+  background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(0,0,0,.18) 5px 6px);border-radius:6px;opacity:.7;}
+.fighter .shorts{position:absolute;top:60px;left:13px;width:34px;height:14px;border-radius:6px;filter:brightness(.65) saturate(1.3);}
+.fighter .upF,.fighter .upB{position:absolute;top:27px;width:10px;height:24px;border-radius:6px;filter:brightness(.88);transform-origin:top center;}
+.fighter .upF{left:2px;}
+.fighter .upB{left:48px;}
+.fighter .loF,.fighter .loB{position:absolute;top:20px;width:9px;height:22px;border-radius:5px;filter:brightness(.78);transform-origin:top center;left:.5px;}
+.fighter .glove{position:absolute;bottom:-9px;left:-2px;width:14px;height:13px;border-radius:50%;
+  box-shadow:inset -2px -3px 5px rgba(0,0,0,.45), inset 2px 2px 4px rgba(255,255,255,.3);}
+.fighter .thF,.fighter .thB{position:absolute;top:68px;width:12px;height:26px;border-radius:6px;filter:brightness(.72);transform-origin:top center;}
+.fighter .thF{left:11px;}
+.fighter .thB{left:36px;}
+.fighter .shF,.fighter .shB{position:absolute;top:22px;width:10px;height:22px;border-radius:5px;filter:brightness(.62);transform-origin:top center;left:1px;}
+.fighter .foot{position:absolute;bottom:-6px;left:-3px;width:16px;height:8px;border-radius:4px 4px 6px 6px;filter:brightness(.5);}
+.fighter{filter:drop-shadow(0 0 5px var(--aura,transparent)) drop-shadow(0 2px 10px rgba(0,0,0,.5));}
+.fighter.punch,.fighter.kick{filter:drop-shadow(0 0 11px var(--aura,transparent)) drop-shadow(0 2px 10px rgba(0,0,0,.5));}
+.gear-headband{position:absolute;top:5px;left:13px;width:30px;height:6px;border-radius:3px;transform:rotate(-6deg);
+  box-shadow:0 1px 2px rgba(0,0,0,.4);}
+.gear-headband:after{content:"";position:absolute;right:-6px;top:-1px;width:9px;height:4px;background:inherit;border-radius:2px;transform:rotate(35deg);}
+.gear-belt{position:absolute;top:58px;left:10px;width:36px;height:8px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.gear-belt:after{content:"";position:absolute;left:13px;top:-1px;width:10px;height:10px;background:rgba(255,255,255,.85);border-radius:2px;}
+.gear-straps{position:absolute;top:24px;left:10px;width:38px;height:44px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 44%,rgba(20,14,10,.7) 46% 52%,transparent 54%),
+             linear-gradient(65deg,transparent 44%,rgba(20,14,10,.7) 46% 52%,transparent 54%);}
+.gear-wraps{position:absolute;top:88px;width:11px;height:8px;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.4);}
+.gear-wrapsF{left:10px;} .gear-wrapsB{left:35px;}
+.fighter.winpose .body{animation:winPose .9s ease;}
+@keyframes winPose{0%{transform:translateY(0) rotate(0)}30%{transform:translateY(-6px) rotate(-6deg)}60%{transform:translateY(-6px) rotate(-6deg)}100%{transform:translateY(0) rotate(0)}}
+.fighter.winpose .upF{animation:winArm .9s ease;}
+@keyframes winArm{0%,20%{transform:rotate(4deg)}45%{transform:rotate(-165deg)}85%{transform:rotate(-165deg)}100%{transform:rotate(4deg)}}
+.fighter.flip-l .body{transform:scaleX(-1);}
+@keyframes idleBreathe{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-1.5px) scaleY(1.012)}}
+.fighter.walking .body{animation:walkBob .32s linear infinite;}
+@keyframes walkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+.fighter.walking .thF{animation:strideF .32s linear infinite;}
+.fighter.walking .thB{animation:strideB .32s linear infinite;}
+@keyframes strideF{0%,100%{transform:rotate(22deg)}50%{transform:rotate(-22deg)}}
+@keyframes strideB{0%,100%{transform:rotate(-22deg)}50%{transform:rotate(22deg)}}
+.fighter.punch .upF{animation:punchArm .32s cubic-bezier(.2,.8,.3,1);}
+.fighter.punch .body{animation:punchLean .32s ease;}
+@keyframes punchArm{0%{transform:rotate(4deg)}25%{transform:rotate(30deg) translateY(-2px)}55%{transform:rotate(-118deg) translateX(4px)}100%{transform:rotate(4deg)}}
+@keyframes punchLean{0%,100%{transform:translateY(0) rotate(0)}55%{transform:translateY(-1px) rotate(-4deg) translateX(3px)}}
+.fighter.kick .thF{animation:kickLeg .38s cubic-bezier(.25,.8,.3,1);}
+.fighter.kick .shF{animation:kickShin .38s cubic-bezier(.25,.8,.3,1);}
+.fighter.kick .body{animation:kickLean .38s ease;}
+@keyframes kickLeg{0%{transform:rotate(0)}30%{transform:rotate(-30deg)}60%{transform:rotate(-95deg)}100%{transform:rotate(0)}}
+@keyframes kickShin{0%{transform:rotate(0)}30%{transform:rotate(-10deg)}60%{transform:rotate(45deg)}100%{transform:rotate(0)}}
+@keyframes kickLean{0%,100%{transform:rotate(0) translateY(0)}60%{transform:rotate(-8deg) translateY(-3px)}}
+.fighter.jump{transition:left .11s linear, bottom .32s cubic-bezier(.3,.6,.3,1);}
+.fighter.jump .body{animation:jumpSquash .5s ease;}
+@keyframes jumpSquash{0%{transform:scaleY(.9)}30%{transform:scaleY(1.08) translateY(-2px)}70%{transform:scaleY(1.08) translateY(-2px)}100%{transform:scaleY(1)}}
+.fighter.flinch .body{filter:brightness(1.5) saturate(0) sepia(1) hue-rotate(-40deg) saturate(3.5);}
+.fighter.dodge .body{animation:dodgeMove .24s ease;}
+@keyframes dodgeMove{0%{opacity:1;filter:none}35%{opacity:.35;filter:blur(1.5px) brightness(1.4)}100%{opacity:1;filter:none}}
+.fighter.crouch .body{animation:none;transform:translateY(15px) scaleY(.76);transition:transform .12s ease;}
+.fighter.knockback{animation:knockback .28s ease;}
+@keyframes knockback{0%{transform:translateX(0)}30%{transform:translateX(-10px) rotate(-3deg)}100%{transform:translateX(0) rotate(0)}}
+.arena.shake{animation:shake .28s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+.fighter.ko .body{animation:koFall .7s ease forwards;}
+@keyframes koFall{to{transform:rotate(78deg) translateY(6px);opacity:.55}}
+.dmg{position:absolute;font-weight:800;font-size:13px;color:var(--gold);pointer-events:none;
+  animation:dmgUp .6s ease forwards;text-shadow:0 2px 4px #000;z-index:3;}
+@keyframes dmgUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-30px)}}
+.spark{position:absolute;width:36px;height:36px;pointer-events:none;z-index:4;
+  background:
+    linear-gradient(0deg,transparent 46%,var(--gold) 46% 54%,transparent 54%),
+    linear-gradient(90deg,transparent 46%,var(--gold) 46% 54%,transparent 54%),
+    linear-gradient(45deg,transparent 46%,#fff 46% 54%,transparent 54%),
+    linear-gradient(-45deg,transparent 46%,#fff 46% 54%,transparent 54%);
+  border-radius:50%;animation:sparkPop .28s ease forwards;}
+@keyframes sparkPop{0%{transform:scale(.3);opacity:1}100%{transform:scale(1.6);opacity:0}}
+#roundIntro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:6;}
+#roundIntro span{font-size:34px;font-weight:900;color:var(--gold);letter-spacing:.04em;
+  text-shadow:0 0 24px rgba(232,178,92,.6),0 4px 10px #000;opacity:0;transform:scale(.6);}
+#roundIntro span.show{animation:introPop .8s cubic-bezier(.2,1.4,.4,1) forwards;}
+@keyframes introPop{0%{opacity:0;transform:scale(.5) rotate(-4deg)}30%{opacity:1;transform:scale(1.12) rotate(1deg)}70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.05)}}
+#toast{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);z-index:8;
+  background:rgba(20,14,38,.95);border:1px solid var(--line);border-radius:12px;padding:10px 18px;
+  font-size:13px;color:#f2ead9;opacity:0;pointer-events:none;transition:opacity .3s;}
+#toast.on{opacity:1;}
+.hud.danger:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:7;
+  box-shadow:inset 0 0 60px 10px rgba(217,79,61,.55);animation:dangerPulse 1s ease-in-out infinite;}
+@keyframes dangerPulse{0%,100%{opacity:.4}50%{opacity:1}}
+#koFlash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9;}
+#koFlash.on{animation:flashOut .5s ease forwards;}
+@keyframes flashOut{0%{opacity:.85}100%{opacity:0}}
 
-    .btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 15px 30px rgba(34, 197, 94, 0.4);
-    }
+.controls{display:flex;align-items:flex-end;justify-content:space-between;
+  padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px));gap:10px;}
+.stick-zone{width:clamp(84px,24vw,104px);height:clamp(84px,24vw,104px);border-radius:50%;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.18);position:relative;flex:none;}
+.stick-nub{position:absolute;width:44%;height:44%;border-radius:50%;left:28%;top:28%;
+  background:radial-gradient(circle at 35% 30%,rgba(232,178,92,.9),rgba(217,79,61,.55));
+  border:1px solid rgba(255,255,255,.4);box-shadow:0 4px 10px rgba(0,0,0,.4);}
+.action-zone{display:grid;grid-template-columns:repeat(2,clamp(50px,14vw,58px));gap:8px;flex:none;}
+.abtn{width:clamp(50px,14vw,58px);height:clamp(50px,14vw,58px);border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.08);backdrop-filter:blur(2px);color:#f2ead9;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;}
+.abtn.crouch{background:rgba(232,178,92,.16);border-color:rgba(232,178,92,.4);}
+.abtn.crouch.active{background:rgba(232,178,92,.4);transform:scale(.92);}
+.abtn.kick{background:rgba(92,201,232,.18);border-color:rgba(92,201,232,.4);}
+.abtn.punch{background:rgba(217,79,61,.22);border-color:rgba(217,79,61,.45);}
+.abtn.jump{background:rgba(232,178,92,.16);border-color:rgba(232,178,92,.4);}
+.abtn.jump.active{background:rgba(232,178,92,.4);transform:scale(.92);}
+.abtn:active{transform:scale(.9);}
+
+/* ---------- OVERLAYS ---------- */
+#overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;background:rgba(6,4,14,.82);backdrop-filter:blur(3px);z-index:5;text-align:center;padding:20px;}
+#overlay.on{display:flex;}
+#overlay h1{font-size:30px;margin:0;color:var(--gold);}
+#overlay p{margin:0;color:#c9bfe0;font-size:13px;max-width:260px;}
 </style>
-
 </head>
-
 <body>
+<div id="rotateGate"><div class="ic">📱</div><p>هذه اللعبة مصممة للوضع العمودي — رجاءً أدر هاتفك</p></div>
+<div id="koFlash"></div>
+<div id="app">
 
-<div class="container">
-    <h1>Hussein</h1>
-    <p>Welcome to the official game portal</p>
+  <!-- MENU -->
+  <div class="screen on" id="menu">
+    <div class="logo">ARENA FIGHTERS</div>
+    <div class="title">Hussein<br><small>FIGHT</small></div>
+    <button class="menu-btn primary" onclick="goSelect('cpu')">لعب ضد الحاسوب</button>
+    <button class="menu-btn" onclick="goSelect('online')">لعب أونلاين (غرفة)</button>
+    <button class="menu-btn" onclick="goSelect('local')">لاعبان على نفس الهاتف</button>
+    <div class="menu-sub">اختر مقاتلك من بين 7 شخصيات • 8 قلوب لكل لاعب • أفضل من 3 جولات • جولة كحد أقصى دقيقتان</div>
+  </div>
 
-    <!-- نفس التبويب بدون target="_blank" -->
-    <a class="btn" href="https://bc.stox2.net/">
-        دخول اللعبة
-    </a>
+  <!-- SELECT -->
+  <div class="screen" id="select">
+    <div class="hdr">
+      <button class="back" onclick="goMenu()">رجوع</button>
+      <h2 id="selTitle">اختر شخصيتك</h2>
+      <span style="width:54px"></span>
+    </div>
+    <div class="roster" id="roster"></div>
+    <div class="selected-bar">
+      <span>المختار: <b id="pickedName">—</b></span>
+      <button class="go-btn" id="startBtn" onclick="handleStart()" disabled>ابدأ القتال</button>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <div class="screen" id="lobby">
+    <div class="hdr" style="padding:16px 16px 0"><button class="back" onclick="cancelLobby()">إلغاء</button><h2>غرفة اللعب</h2><span style="width:54px"></span></div>
+    <div id="lobbyChoice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;">
+      <button class="menu-btn primary" onclick="hostRoom()">إنشاء غرفة (مضيف)</button>
+      <button class="menu-btn" onclick="showJoin()">انضمام لغرفة صديق</button>
+      <p style="color:#8a7fa8;font-size:12px;max-width:260px;text-align:center;">لا تحتاجون شبكة واحدة — يعمل عبر أي إنترنت. واحد يُنشئ ويرسل رمزًا، والثاني يلصقه وينضم.</p>
+    </div>
+    <div id="hostPanel" class="lobby-box" style="display:none">
+      <p>1) انسخ هذا الرمز وأرسله لصديقك (واتساب مثلاً):</p>
+      <textarea id="hostCode" readonly></textarea>
+      <button class="menu-btn primary" onclick="copyCode('hostCode')">نسخ الرمز</button>
+      <p>2) لما يرد عليك برمز، الصقه هون واضغط اتصال:</p>
+      <textarea id="hostAnswerInput" placeholder="الصق رمز الرد هون"></textarea>
+      <button class="menu-btn primary" onclick="hostConnect()">اتصال</button>
+    </div>
+    <div id="joinPanel" class="lobby-box" style="display:none">
+      <p>1) الصق الرمز اللي أرسله لك صاحب الغرفة:</p>
+      <textarea id="joinInput" placeholder="الصق الرمز هون"></textarea>
+      <button class="menu-btn primary" onclick="joinGenerateAnswer()">توليد رمز الرد</button>
+      <div id="joinAnswerBox" style="display:none">
+        <p>2) انسخ هذا وأرسله رجوع لصاحب الغرفة:</p>
+        <textarea id="joinAnswerCode" readonly></textarea>
+        <button class="menu-btn primary" onclick="copyCode('joinAnswerCode')">نسخ الرمز</button>
+      </div>
+    </div>
+    <p id="lobbyStatus" style="color:#c9bfe0;font-size:13px;text-align:center;padding:0 20px 16px;"></p>
+  </div>
+
+  <!-- FIGHT -->
+  <div class="screen" id="fight">
+    <div class="hud">
+      <div class="side p1"><div class="name" id="n1"></div><div class="hearts" id="h1"></div></div>
+      <div class="clock" id="clock">2:00</div>
+      <div class="side p2"><div class="name" id="n2"></div><div class="hearts" id="h2"></div></div>
+    </div>
+    <div class="roundpips" id="pips1" style="justify-content:flex-start;padding-inline-start:12px"></div>
+    <div class="arena" id="arena"></div>
+    <div id="roundIntro"><span id="roundIntroText"></span></div>
+    <div id="toast"></div>
+    <div class="controls">
+      <div class="stick-zone" id="stick"><div class="stick-nub" id="nub"></div></div>
+      <div class="action-zone">
+        <button class="abtn punch" id="btnPunch">لكم</button>
+        <button class="abtn kick" id="btnKick">ركل</button>
+        <button class="abtn crouch" id="btnCrouch">انبطاح</button>
+        <button class="abtn jump" id="btnJump">قفز</button>
+      </div>
+    </div>
+    <div id="overlay">
+      <h1 id="ovTitle"></h1>
+      <p id="ovSub"></p>
+      <button class="menu-btn primary" id="ovBtn" onclick="ovAction()">متابعة</button>
+    </div>
+  </div>
+
 </div>
+<script>
+const ROSTER=[
+ {id:0,name:'Alex',   style:'ملاكمة',    skin:'#c98a5b',hair:'#1c130d',shorts:'#d94f3d',glove:'#a8332a',gear:'none'},
+ {id:1,name:'Nadia',  style:'موي تاي',   skin:'#e0aa7a',hair:'#241612',shorts:'#5cc9e8',glove:'#12586b',gear:'headband'},
+ {id:2,name:'Ivan',   style:'مصارعة',    skin:'#8a5a3a',hair:'#0e0a08',shorts:'#e8b25c',glove:'#8a5b16',gear:'straps'},
+ {id:3,name:'Sofia',  style:'كاراتيه',   skin:'#f0c9a0',hair:'#3a2418',shorts:'#a35ce8',glove:'#4b1d75',gear:'belt'},
+ {id:4,name:'Leon',   style:'كابويرا',   skin:'#6b4226',hair:'#100c08',shorts:'#5ce88a',glove:'#166b34',gear:'headband'},
+ {id:5,name:'Mia',    style:'كيك بوكسينغ',skin:'#e8b98c',hair:'#4a2a10',shorts:'#e85c9d',glove:'#7a1d4c',gear:'wraps'},
+ {id:6,name:'Kenji',  style:'جودو',      skin:'#caa07a',hair:'#1a140c',shorts:'#e8d65c',glove:'#8a7a16',gear:'belt'},
+];
+let mode='cpu', picking=1, p1c=null, p2c=null;
+const $=id=>document.getElementById(id);
 
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');}
+function goMenu(){showScreen('menu');}
+function goSelect(m){mode=m;picking=1;p1c=null;p2c=null;$('startBtn').disabled=true;$('pickedName').textContent='—';
+  $('selTitle').textContent= (m==='cpu'||m==='online') ? 'اختر شخصيتك' : 'اختر شخصية اللاعب 1';
+  $('startBtn').textContent = m==='online' ? 'ابحث عن خصم' : 'ابدأ القتال';
+  buildRoster(); showScreen('select');}
+
+function buildRoster(){
+  const r=$('roster'); r.innerHTML='';
+  ROSTER.forEach(f=>{
+    const el=document.createElement('div'); el.className='card'; el.onclick=()=>pick(f);
+    el.innerHTML=`<div class="avatar" style="background:radial-gradient(160% 160% at 35% 20%,${f.skin},${f.hair} 115%);--glow:${f.glove}"></div><b>${f.name}</b><span>${f.style}</span>`;
+    el.dataset.id=f.id; r.appendChild(el);
+  });
+}
+function pick(f){
+  if(mode==='cpu'||mode==='online'){ p1c=f; $('pickedName').textContent=f.name; $('startBtn').disabled=false;
+    [...$('roster').children].forEach(c=>c.classList.toggle('sel',+c.dataset.id===f.id));
+    return;
+  }
+  if(picking===1){ p1c=f; picking=2; $('selTitle').textContent='اختر شخصية اللاعب 2';
+    $('pickedName').textContent=f.name+' ← دور اللاعب 2';
+    [...$('roster').children].forEach(c=>c.classList.toggle('sel',+c.dataset.id===f.id));
+  } else {
+    p2c=f; $('pickedName').textContent=p1c.name+' ضد '+f.name; $('startBtn').disabled=false;
+  }
+}
+
+/* ---------------- FIGHT ENGINE ---------------- */
+let P1,P2,timer,timeLeft,round,wins1,wins2,animLock1=false,animLock2=false,cpuTimer;
+const ARENA_W=()=> $('arena').clientWidth;
+const FW=56;
+
+function makeFighter(cfg,side){
+  const startX = side==='l'? 40: ARENA_W()-40-FW;
+  return {cfg, hp:8, x:startX, renderX:startX, side, facing: side==='l'?1:-1,
+    vy:0, jumping:false, locked:false, el:null};
+}
+function renderLoop(){
+  [P1,P2].forEach(F=>{ if(!F) return;
+    F.renderX += (F.x-F.renderX)*.4;
+    if(Math.abs(F.x-F.renderX)<.3) F.renderX=F.x;
+    if(F.el) F.el.style.left=F.renderX+'px';
+  });
+  requestAnimationFrame(renderLoop);
+}
+requestAnimationFrame(renderLoop);
+
+function startFight(){
+  round=1;wins1=0;wins2=0;
+  P1=makeFighter(p1c,'l');
+  P2=makeFighter(mode==='cpu'? ROSTER[(p1c.id+3)%7] : p2c,'r');
+  $('n1').textContent=P1.cfg.name; $('n2').textContent=mode==='cpu'?('CPU · '+P2.cfg.name):P2.cfg.name;
+  buildPips(); showScreen('fight'); setupArena(); startRound();
+}
+function buildPips(){
+  const p=$('pips1'); p.innerHTML='';
+  for(let i=0;i<3;i++){const d=document.createElement('div');d.className='pip';d.id='pipA'+i;p.appendChild(d);}
+  for(let i=0;i<3;i++){const d=document.createElement('div');d.className='pip';d.id='pipB'+i;p.appendChild(d);}
+}
+function updatePips(){
+  for(let i=0;i<3;i++){$('pipA'+i).classList.toggle('won',i<wins1); $('pipA'+i).style.background=i<wins1?'var(--ember)':'';}
+  for(let i=0;i<3;i++){$('pipB'+i).classList.toggle('won',i<wins2); $('pipB'+i).style.background=i<wins2?'var(--ice)':'';}
+}
+function fighterHTML(cfg){
+  const gearHTML = cfg.gear==='headband' ? '<div class="gear-headband"></div>'
+    : cfg.gear==='belt' ? '<div class="gear-belt"></div>'
+    : cfg.gear==='straps' ? '<div class="gear-straps"></div>'
+    : cfg.gear==='wraps' ? '<div class="gear-wraps gear-wrapsF"></div><div class="gear-wraps gear-wrapsB"></div>'
+    : '';
+  return `<div class="shadow"></div><div class="body">
+  <div class="thB"><div class="shB"><div class="foot"></div></div></div>
+  <div class="thF"><div class="shF"><div class="foot"></div></div></div>
+  <div class="torso"><div class="abs"></div></div><div class="shorts"></div>
+  <div class="neck"></div><div class="hair"></div><div class="head"></div>
+  <div class="upB"><div class="loB"><div class="glove"></div></div></div>
+  <div class="upF"><div class="loF"><div class="glove"></div></div></div>
+  ${gearHTML}
+  </div>`;
+}
+function setupArena(){
+  const ar=$('arena'); ar.innerHTML='';
+  [P1,P2].forEach(F=>{
+    const el=document.createElement('div'); el.className='fighter'; el.style.left=F.renderX+'px';
+    el.style.setProperty('--aura',F.cfg.glove);
+    el.innerHTML=fighterHTML(F.cfg);
+    el.querySelectorAll('.head,.torso,.neck').forEach(p=>p.style.background=`radial-gradient(160% 160% at 35% 20%,${F.cfg.skin},${F.cfg.skin} 60%, #000 130%)`);
+    el.querySelectorAll('.upF,.upB,.loF,.loB,.thF,.thB,.shF,.shB,.foot').forEach(p=>p.style.background=F.cfg.skin);
+    el.querySelectorAll('.hair').forEach(p=>p.style.background=F.cfg.hair);
+    el.querySelectorAll('.shorts').forEach(p=>p.style.background=F.cfg.shorts);
+    el.querySelectorAll('.glove').forEach(p=>p.style.background=F.cfg.glove);
+    el.querySelectorAll('.gear-headband,.gear-belt,.gear-wraps').forEach(p=>p.style.background=F.cfg.glove);
+    F.el=el; ar.appendChild(el);
+  });
+  renderHearts();
+}
+function renderHearts(){
+  const heartSVG=(full)=>`<svg viewBox="0 0 24 24"><path fill="${full?'#d94f3d':'rgba(255,255,255,.15)'}" d="M12 21s-7.5-4.9-10-9.6C.3 7.8 2 4 5.6 4 8 4 10 5.5 12 8c2-2.5 4-4 6.4-4C22 4 23.7 7.8 22 11.4 19.5 16.1 12 21 12 21z"/></svg>`;
+  $('h1').innerHTML=Array.from({length:8},(_,i)=>`<div class="heart">${heartSVG(i<P1.hp)}</div>`).join('');
+  $('h2').innerHTML=Array.from({length:8},(_,i)=>`<div class="heart">${heartSVG(i<P2.hp)}</div>`).join('');
+  document.querySelector('.hud').classList.toggle('danger', P1.hp>0 && P1.hp<=2);
+}
+function startRound(){
+  P1.hp=8;P2.hp=8;P1.x=40;P2.x=ARENA_W()-40-FW;P1.renderX=P1.x;P2.renderX=P2.x;P1.el.style.left=P1.x+'px';P2.el.style.left=P2.x+'px';
+  P1.locked=false;P2.locked=false;P1.dodging=false;P2.dodging=false;P1.crouching=false;P2.crouching=false;dodgeReady=true;
+  P1.el.classList.remove('ko','dodge','crouch');P2.el.classList.remove('ko','dodge','crouch');
+  renderHearts(); timeLeft=120; $('clock').textContent='2:00'; updatePips();
+  clearInterval(timer); clearInterval(cpuTimer);
+  P1.locked=true;P2.locked=true;
+  showRoundIntro(()=>{
+    P1.locked=false;P2.locked=false;
+    timer=setInterval(()=>{ timeLeft--; const m=Math.floor(timeLeft/60),s=timeLeft%60;
+      $('clock').textContent=m+':'+String(s).padStart(2,'0');
+      if(timeLeft<=0){clearInterval(timer); roundEndByTime();}
+    },1000);
+    if(mode==='cpu'){ clearInterval(cpuTimer); cpuTimer=setInterval(cpuAI,260); }
+  });
+}
+function roundEndByTime(){
+  if(P1.hp===P2.hp) return roundResult(null);
+  roundResult(P1.hp>P2.hp?1:2);
+}
+function roundResult(winner){
+  clearInterval(timer); clearInterval(cpuTimer);
+  if(winner===1) wins1++; else if(winner===2) wins2++;
+  updatePips(); sfx('win');
+  const winEl = winner===1?P1.el : winner===2?P2.el : null;
+  if(winEl){ winEl.classList.add('winpose'); setTimeout(()=>winEl.classList.remove('winpose'),950); }
+  const matchOver = wins1===2 || wins2===2;
+  $('ovTitle').textContent = winner===null? 'تعادل الجولة' : (winner===1? P1.cfg.name+' يفوز بالجولة!' : (mode==='cpu'?'الحاسوب يفوز بالجولة':P2.cfg.name+' يفوز بالجولة!'));
+  $('ovSub').textContent = matchOver? '' : `الجولة ${round+1} من 3 — استعد!`;
+  if(matchOver){
+    const champ = wins1>wins2? P1.cfg.name : (mode==='cpu'?'الحاسوب':P2.cfg.name);
+    $('ovTitle').textContent = champ+' بطل المباراة!';
+    $('ovSub').textContent='';
+    $('ovBtn').textContent='القائمة الرئيسية';
+  } else { $('ovBtn').textContent='الجولة التالية'; round++; }
+  $('overlay').classList.add('on');
+}
+function ovAction(){
+  $('overlay').classList.remove('on');
+  if(wins1===2||wins2===2){ clearInterval(posTimer); paired=false; showScreen('menu'); return; }
+  startRound();
+}
+
+/* movement + controls */
+let move1=0; // -1,0,1
+function setP1(dx){
+  if(P1.locked||P1.dodging) return;
+  P1.x = Math.max(0, Math.min(ARENA_W()-FW, P1.x+dx));
+  const distR = P2.x - P1.x;
+  P1.facing = distR>=0?1:-1;
+  P1.el.classList.toggle('flip-l', P1.facing===-1);
+  P1.el.classList.add('walking');
+  clearTimeout(P1.walkT); P1.walkT=setTimeout(()=>P1.el.classList.remove('walking'),140);
+}
+let dodgeReady=true;
+function triggerDodge(){
+  if(!P1||P1.locked||P1.dodging||!dodgeReady||P1.hp<=0) return;
+  dodgeReady=false; P1.dodging=true; P1.el.classList.add('dodge'); sfx('jump');
+  const away = (P1.facing===1?-1:1)*36;
+  P1.x = Math.max(0, Math.min(ARENA_W()-FW, P1.x+away));
+  if(mode==='online') sendMsg('action',{type:'dodge'});
+  setTimeout(()=>{ P1.dodging=false; P1.el.classList.remove('dodge'); },240);
+  setTimeout(()=>{ dodgeReady=true; },480);
+}
+const stick=$('stick'), nub=$('nub');
+let stickActive=false, stickOrigin={x:0,y:0}, dodgeArmed=true;
+function stickStart(e){ stickActive=true; dodgeArmed=true; const t=e.touches?e.touches[0]:e; stickOrigin={x:t.clientX,y:t.clientY}; }
+function stickMove(e){ if(!stickActive) return; const t=e.touches?e.touches[0]:e;
+  let dx=t.clientX-stickOrigin.x; dx=Math.max(-30,Math.min(30,dx));
+  nub.style.transform=`translateX(${dx}px)`;
+  move1 = dx<-10? -1 : dx>10? 1 : 0;
+  if(dx<=-26 && dodgeArmed){ dodgeArmed=false; triggerDodge(); }
+}
+function stickEnd(){ stickActive=false; nub.style.transform=''; move1=0; }
+stick.addEventListener('touchstart',stickStart); stick.addEventListener('touchmove',stickMove); stick.addEventListener('touchend',stickEnd);
+stick.addEventListener('mousedown',stickStart); window.addEventListener('mousemove',e=>{if(stickActive)stickMove(e);}); window.addEventListener('mouseup',stickEnd);
+setInterval(()=>{ if(move1!==0 && !P1.locked && !P1.dodging && !P1.crouching) setP1(move1*5); },16);
+
+function doJump(F){
+  if(F.jumping) return; F.jumping=true; F.el.classList.add('jump');
+  F.el.style.bottom='34%';
+  setTimeout(()=>{ F.el.style.bottom='14%'; setTimeout(()=>{F.jumping=false; F.el.classList.remove('jump');},260);},320);
+}
+function inRange(A,B){ return Math.abs((A.x)-(B.x)) < 68; }
+function popDmg(target,txt){
+  const d=document.createElement('div'); d.className='dmg'; d.textContent=txt;
+  d.style.left=(target.x+10)+'px'; d.style.bottom= '55%';
+  $('arena').appendChild(d); setTimeout(()=>d.remove(),600);
+}
+function attack(attacker,defender,type){
+  if(attacker.hp<=0||defender.hp<=0||attacker.locked) return;
+  attacker.locked=true;
+  const cls = type==='punch'?'punch':'kick';
+  attacker.el.classList.add(cls); sfx(type);
+  const windup = type==='punch'?150:190;   // مهلة قبل وصول الضربة — تتيح التفادي بالحركة
+  const total  = type==='punch'?320:380;
+  setTimeout(()=>{
+    if(defender.hp<=0) return;
+    const evaded = (type==='kick' && defender.jumping) || (type==='punch' && defender.crouching) || defender.dodging;
+    if(!evaded && inRange(attacker,defender)){
+      defender.hp=Math.max(0,defender.hp-1);
+      defender.el.classList.add('flinch','knockback');
+      setTimeout(()=>defender.el.classList.remove('flinch','knockback'),280);
+      $('arena').classList.add('shake'); setTimeout(()=>$('arena').classList.remove('shake'),280);
+      popDmg(defender,'-1'); onHit(defender);
+      renderHearts();
+      if(defender.hp===0){ defender.el.classList.add('ko'); onKO(defender); roundResult(defender===P1?2:1); }
+    } else {
+      popDmg(defender.x>attacker.x?attacker:defender,'تفادي!');
+    }
+  },windup);
+  setTimeout(()=>{ attacker.el.classList.remove(cls); attacker.locked=false; },total);
+}
+$('btnPunch').addEventListener('touchstart',e=>{e.preventDefault();pPunch();});
+$('btnKick').addEventListener('touchstart',e=>{e.preventDefault();pKick();});
+$('btnJump').addEventListener('touchstart',e=>{e.preventDefault();pJump();});
+$('btnCrouch').addEventListener('touchstart',e=>{e.preventDefault();pCrouchStart();});
+$('btnCrouch').addEventListener('touchend',e=>{e.preventDefault();pCrouchEnd();});
+$('btnCrouch').addEventListener('mousedown',pCrouchStart);
+$('btnCrouch').addEventListener('mouseup',pCrouchEnd);
+$('btnPunch').addEventListener('click',pPunch);
+$('btnKick').addEventListener('click',pKick);
+$('btnJump').addEventListener('click',pJump);
+function pPunch(){ mode==='online' ? onlineSelfAttack('punch') : attack(P1,P2,'punch'); }
+function pKick(){ mode==='online' ? onlineSelfAttack('kick') : attack(P1,P2,'kick'); }
+function pJump(){ if(mode==='online'){ onlineSelfJump(); } else { doJump(P1); sfx('jump'); } }
+function pCrouchStart(){
+  if(!P1||P1.locked||P1.hp<=0||P1.crouching) return;
+  P1.crouching=true; P1.el.classList.add('crouch'); $('btnCrouch').classList.add('active');
+  if(mode==='online') sendMsg('action',{type:'crouchstart'});
+}
+function pCrouchEnd(){
+  if(!P1||!P1.crouching) return;
+  P1.crouching=false; P1.el.classList.remove('crouch'); $('btnCrouch').classList.remove('active');
+  if(mode==='online') sendMsg('action',{type:'crouchend'});
+}
+
+/* simple CPU AI for P2 */
+function cpuAI(){
+  if(P2.hp<=0||P1.hp<=0||P2.locked) return;
+  const dist = P1.x-P2.x;
+  P2.facing = dist<0?1:-1; P2.el.classList.toggle('flip-l', P2.facing===-1);
+  if(Math.abs(dist) > 66){
+    const step = Math.sign(dist)*6;
+    P2.x=Math.max(0,Math.min(ARENA_W()-FW,P2.x+step));
+    P2.el.classList.add('walking'); clearTimeout(P2.walkT); P2.walkT=setTimeout(()=>P2.el.classList.remove('walking'),140);
+  } else {
+    const r=Math.random();
+    if(r<0.42) attack(P2,P1,'punch'); else if(r<0.68) attack(P2,P1,'kick');
+    else if(r<0.84) doJump(P2);
+    else if(!P2.crouching){ P2.crouching=true; P2.el.classList.add('crouch'); setTimeout(()=>{P2.crouching=false;P2.el.classList.remove('crouch');},420); }
+  }
+}
+window.addEventListener('resize',()=>{ if(P1&&P2){P1.x=Math.min(P1.x,ARENA_W()-FW);P2.x=Math.min(P2.x,ARENA_W()-FW);} });
+
+/* ---------------- FX: sound, haptics, particles, round intro ---------------- */
+let actx=null;
+function sfx(type){
+  try{
+    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') actx.resume();
+    const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    const c={punch:{f:190,f2:55,d:.09,ty:'square',v:.22},kick:{f:150,f2:35,d:.15,ty:'square',v:.26},
+      hit:{f:320,f2:70,d:.12,ty:'sawtooth',v:.24},jump:{f:380,f2:640,d:.1,ty:'sine',v:.14},
+      ko:{f:240,f2:35,d:.55,ty:'sawtooth',v:.3},go:{f:520,f2:920,d:.22,ty:'triangle',v:.2},
+      win:{f:600,f2:1040,d:.45,ty:'triangle',v:.24}}[type]||{f:300,f2:300,d:.1,ty:'sine',v:.15};
+    o.type=c.ty; o.frequency.setValueAtTime(c.f,t); o.frequency.exponentialRampToValueAtTime(Math.max(c.f2,1),t+c.d);
+    g.gain.setValueAtTime(c.v,t); g.gain.exponentialRampToValueAtTime(.001,t+c.d);
+    o.start(t); o.stop(t+c.d+.03);
+  }catch(e){}
+}
+function buzz(pattern){ try{ navigator.vibrate && navigator.vibrate(pattern); }catch(e){} }
+function spark(F){
+  const s=document.createElement('div'); s.className='spark';
+  s.style.left=(F.x+FW/2-18)+'px'; s.style.top='34px';
+  $('arena').appendChild(s); setTimeout(()=>s.remove(),300);
+}
+function showRoundIntro(cb){
+  const el=$('roundIntro'), t=$('roundIntroText');
+  t.textContent='الجولة '+round; t.className=''; void t.offsetWidth; t.classList.add('show'); sfx('go');
+  setTimeout(()=>{ t.textContent='قاتل!'; t.className=''; void t.offsetWidth; t.classList.add('show'); sfx('go'); },850);
+  setTimeout(()=>{ t.className=''; if(cb) cb(); },1650);
+}
+function toast(msg){ const el=$('toast'); el.textContent=msg; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),2600); }
+function onHit(defender){ spark(defender); sfx('hit'); if(defender===P1) buzz(30); }
+function onKO(defender){ sfx('ko'); if(defender===P1){ buzz([40,40,70]); const f=$('koFlash'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); document.querySelector('.hud').classList.remove('danger'); } }
+
+/* ---------------- ONLINE (WebRTC, works on any host incl. GitHub Pages) ---------------- */
+let pc=null, dc=null, oppCfg=null, posTimer=null, paired=false, helloTimer=null;
+const ICE_CFG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+
+function handleStart(){ mode==='online' ? goOnlineLobby() : startFight(); }
+function goOnlineLobby(){
+  showScreen('lobby'); paired=false; oppCfg=null;
+  $('lobbyChoice').style.display='flex'; $('hostPanel').style.display='none'; $('joinPanel').style.display='none';
+  $('lobbyStatus').textContent='';
+  ['hostCode','hostAnswerInput','joinInput','joinAnswerCode'].forEach(id=>$(id).value='');
+  $('joinAnswerBox').style.display='none';
+}
+function cancelLobby(){ teardownPC(); showScreen('menu'); }
+function teardownPC(){ clearInterval(helloTimer); clearInterval(posTimer); if(dc)try{dc.close();}catch(e){} if(pc)try{pc.close();}catch(e){} dc=null; pc=null; paired=false; }
+function copyCode(id){ const t=$(id); t.focus(); t.select();
+  try{ navigator.clipboard.writeText(t.value).then(()=>toast('تم النسخ!')); }catch(e){ toast('انسخ يدويًا من الصندوق'); } }
+
+function newPC(){
+  pc=new RTCPeerConnection(ICE_CFG);
+  pc.oniceconnectionstatechange=()=>{ if(paired && ['disconnected','failed','closed'].includes(pc.iceConnectionState)) handleDisconnect(); };
+}
+function wireDC(){
+  dc.onopen=()=>{ $('lobbyStatus').textContent='متصل! جارٍ المزامنة...';
+    clearInterval(helloTimer);
+    helloTimer=setInterval(()=>{ if(!paired) sendMsg('hello',{id:p1c.id,name:p1c.name}); },350);
+    sendMsg('hello',{id:p1c.id,name:p1c.name});
+  };
+  dc.onmessage=e=>{ let m; try{m=JSON.parse(e.data);}catch(e){return;} routeMsg(m.t,m.d); };
+  dc.onclose=()=>handleDisconnect();
+}
+function sendMsg(t,d){ if(dc&&dc.readyState==='open') dc.send(JSON.stringify({t,d})); }
+function routeMsg(t,d){
+  if(t==='hello') onHello(d); else if(t==='pos') onPos(d); else if(t==='action') onAction(d);
+  else if(t==='hp') onHp(d); else if(t==='roundend') onRoundEnd(d);
+}
+function handleDisconnect(){
+  if(!paired) return; paired=false;
+  clearInterval(timer); clearInterval(posTimer);
+  toast('انقطع الاتصال بالخصم');
+  setTimeout(()=>showScreen('menu'),1800);
+}
+
+async function hostRoom(){
+  $('lobbyChoice').style.display='none'; $('hostPanel').style.display='flex'; $('joinPanel').style.display='none';
+  $('lobbyStatus').textContent='جاري توليد الرمز...';
+  newPC(); dc=pc.createDataChannel('game'); wireDC();
+  const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
+  await waitIceComplete(pc);
+  $('hostCode').value=btoa(JSON.stringify(pc.localDescription));
+  $('lobbyStatus').textContent='انسخ الرمز وأرسله، ثم انتظر رد صديقك بالأسفل.';
+}
+async function hostConnect(){
+  try{
+    const ans=JSON.parse(atob($('hostAnswerInput').value.trim()));
+    await pc.setRemoteDescription(ans);
+    $('lobbyStatus').textContent='جارٍ الاتصال...';
+  }catch(e){ $('lobbyStatus').textContent='رمز الرد غير صالح، تأكد من نسخه كاملًا.'; }
+}
+function showJoin(){
+  $('lobbyChoice').style.display='none'; $('hostPanel').style.display='none'; $('joinPanel').style.display='flex';
+}
+async function joinGenerateAnswer(){
+  try{
+    const offer=JSON.parse(atob($('joinInput').value.trim()));
+    newPC(); pc.ondatachannel=e=>{ dc=e.channel; wireDC(); };
+    await pc.setRemoteDescription(offer);
+    const ans=await pc.createAnswer(); await pc.setLocalDescription(ans);
+    await waitIceComplete(pc);
+    $('joinAnswerCode').value=btoa(JSON.stringify(pc.localDescription));
+    $('joinAnswerBox').style.display='block';
+    $('lobbyStatus').textContent='أرسل الرمز لصاحب الغرفة وانتظر بدء المباراة.';
+  }catch(e){ $('lobbyStatus').textContent='رمز الغرفة غير صالح، تأكد من نسخه كاملًا.'; }
+}
+function waitIceComplete(pc){
+  return new Promise(res=>{
+    if(pc.iceGatheringState==='complete') return res();
+    const chk=()=>{ if(pc.iceGatheringState==='complete'){ pc.removeEventListener('icegatheringstatechange',chk); res(); } };
+    pc.addEventListener('icegatheringstatechange',chk);
+    setTimeout(res,4000); // fallback: proceed even if gathering is slow
+  });
+}
+function onHello(data){
+  if(paired) return;
+  paired=true; clearInterval(helloTimer);
+  oppCfg = {...(ROSTER.find(r=>r.id===data.id)||ROSTER[0]), name:data.name||'خصم'};
+  $('lobbyStatus').textContent='تم الاتصال بـ '+oppCfg.name+'! جارٍ البدء...';
+  setTimeout(startOnlineFight,500);
+}
+function startOnlineFight(){
+  mode='online';
+  P1=makeFighter(p1c,'l'); P2=makeFighter(oppCfg,'r');
+  $('n1').textContent=P1.cfg.name; $('n2').textContent=P2.cfg.name;
+  buildPips(); showScreen('fight'); setupArena(); startRound();
+  clearInterval(posTimer);
+  posTimer=setInterval(()=>{ if(P1.hp>0) sendMsg('pos',{x:Math.round(P1.x),jump:P1.jumping}); },90);
+}
+function onPos(data){
+  if(mode!=='online'||!P2) return;
+  const mx=Math.max(0,Math.min(ARENA_W()-FW, ARENA_W()-data.x-FW));
+  P2.x=mx; P2.jumping=!!data.jump;
+  P2.facing = P2.x<P1.x?1:-1; P2.el.classList.toggle('flip-l',P2.facing===-1);
+  P1.facing = P2.x>=P1.x?1:-1; P1.el.classList.toggle('flip-l',P1.facing===-1);
+}
+function onAction(data){
+  if(mode!=='online'||!P2) return;
+  if(data.type==='jump'){ doJump(P2); return; }
+  if(data.type==='dodge'){ P2.el.classList.add('dodge'); setTimeout(()=>P2.el.classList.remove('dodge'),240); return; }
+  if(data.type==='crouchstart'){ P2.el.classList.add('crouch'); return; }
+  if(data.type==='crouchend'){ P2.el.classList.remove('crouch'); return; }
+  const cls=data.type, total=cls==='punch'?320:380, windup=cls==='punch'?150:190;
+  P2.el.classList.add(cls); setTimeout(()=>P2.el.classList.remove(cls),total);
+  setTimeout(()=>{
+    if(P1.hp<=0) return;
+    const evaded = (cls==='kick' && P1.jumping) || (cls==='punch' && P1.crouching) || P1.dodging;
+    if(!evaded && inRange(P1,P2)){
+      P1.hp=Math.max(0,P1.hp-1);
+      P1.el.classList.add('flinch','knockback'); setTimeout(()=>P1.el.classList.remove('flinch','knockback'),280);
+      $('arena').classList.add('shake'); setTimeout(()=>$('arena').classList.remove('shake'),280);
+      popDmg(P1,'-1'); onHit(P1); renderHearts();
+      sendMsg('hp',{hp:P1.hp});
+      if(P1.hp===0){ P1.el.classList.add('ko'); onKO(P1); sendMsg('roundend',{loser:true}); roundResult(2); }
+    } else { popDmg(P1,'تفادي!'); }
+  },windup);
+}
+function onHp(data){ if(mode!=='online'||!P2) return; P2.hp=data.hp; renderHearts(); }
+function onRoundEnd(data){ if(mode!=='online') return; if(data.loser) roundResult(1); }
+function onlineSelfAttack(type){
+  if(!P1||P1.locked||P1.hp<=0) return; P1.locked=true;
+  P1.el.classList.add(type); sfx(type);
+  sendMsg('action',{type});
+  const total=type==='punch'?320:380;
+  setTimeout(()=>{ P1.el.classList.remove(type); P1.locked=false; },total);
+}
+function onlineSelfJump(){ doJump(P1); sfx('jump'); sendMsg('action',{type:'jump'}); }
+</script>
 </body>
 </html>
